@@ -19,17 +19,20 @@
  * The reader can be found on eBay for around 5 dollars. Search for "mf-rc522" on ebay.com. 
  */
 
+ #define BLYNK_PRINT Serial
+
 #include <SPI.h>
 #include <MFRC522.h>
-// You could use a spare Hardware Serial on boards that have it (like Mega)
-#include <SoftwareSerial.h>
-SoftwareSerial DebugSerial(2, 3); // RX, TX
+#include <ESP8266_Lib.h>
+#include <BlynkSimpleShieldEsp8266.h>
 
-#include <BlynkSimpleStream.h>
 
 // You should get Auth Token in the Blynk App.
 // Go to the Project Settings (nut icon).
 char auth[] = "8e68cd15e5524577b47bf2b30cb77552";
+char ssid[] = "SK_WiFiGIGAA904";
+char pass[] = "1903046404";
+
 
 #define RST_PIN         5           // Configurable, see typical pin layout above
 #define SS_PIN          53          // Configurable, see typical pin layout above
@@ -44,12 +47,20 @@ bool stat=0;
 WidgetTerminal Term(V3);
 WidgetLED Grn(V1);
 WidgetLED Red(V2);
+
+#define EspSerial Serial1
+#define ESP8266_BAUD 115200
+
+ESP8266 wifi(&EspSerial);
+
 void setup() {
-  DebugSerial.begin(9600);
   Serial.begin(9600);                                           // Initialize serial communications with the PC
+  delay(10);
   SPI.begin();                                                  // Init SPI bus
   mfrc522.PCD_Init();                                              // Init MFRC522 card
-  Blynk.begin(Serial, auth);
+  EspSerial.begin(ESP8266_BAUD);
+  delay(10);
+  Blynk.begin(auth, wifi, ssid, pass);
   Term.clear();
   Term.println(F("Read personal data on a MIFARE PICC:"));    //shows in serial that it is ready to read
 }
@@ -72,6 +83,7 @@ void loop()
     {
       Term.println("노약자/장애인입니다");
       if(stat==1&&green<limit)green+=2000;
+      delay(500);
     }
   }
   outside:
@@ -91,5 +103,5 @@ void loop()
     Blynk.virtualWrite(V0,((green/1000)-((int(millis()/1000))%30)));
   }
   Term.flush();
-  delay(250);
+  delay(100);
 }
